@@ -1,7 +1,5 @@
 # Commerce Concierge
-Your personal shopping assistant. Drop in a text description or attach an image [file/doc/URL] and I will help you get the best for you.
-
-Commerce Concierge — AI-Powered Product Recommendation Agent
+AI-Powered Product Recommendation Agent
 
 Your personal shopping assistant. Drop in a text description or attach an image [file/doc/URL] and I will help you get the best for you.
 
