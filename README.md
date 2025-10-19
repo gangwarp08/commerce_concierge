@@ -18,7 +18,7 @@ commerce-concierge/
 │   ├── requirements.txt         # Python dependencies
 │   └── Dockerfile               # Optional containerization
 ├── workflows/
-│   ├── n8n_commerce_concierge.json   # Your exported n8n workflow
+│   ├── n8n_commerce_concierge.json   # Exported n8n workflow
 │   └── openapi_schema.json      # Custom GPT → n8n Webhook schema
 ├── data/
 │   ├── catalog_sample.csv       # Sample of embedded product catalog
@@ -27,7 +27,7 @@ commerce-concierge/
     └── embed_catalog.py         # Your provided embedding script (text + image)
 ```
 
-### 📘 README.md (Documentation)
+### README.md
 **Overview**
 
 Commerce Concierge is an AI shopping assistant that integrates:
