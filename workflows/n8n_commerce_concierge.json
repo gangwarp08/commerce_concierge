@@ -1,0 +1,443 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "e33d0db3-e6a3-4da4-b04b-064ffe596724",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -400,
+        224
+      ],
+      "id": "4e7c0a7a-3ede-4915-926e-ce426cd0f186",
+      "name": "Webhook",
+      "webhookId": "e33d0db3-e6a3-4da4-b04b-064ffe596724"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1632,
+        224
+      ],
+      "id": "ac009ee9-6adb-42e5-8754-8f59adfcc104",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/embeddings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer ${OPENAI_API_KEY}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"text-embedding-3-small\",\n  \"input\": \"{{ $json.InputText }}\",\n  \"dimensions\": 384\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        576,
+        128
+      ],
+      "id": "0263a93d-3411-4dd5-92ae-1d3d167e4750",
+      "name": "OpenAI embeddings"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Expect: one input item with HTTP embeddings JSON under $json\nconst emb = $json.data?.[0]?.embedding;\n\nif (!Array.isArray(emb)) {\n  // Return ONE object, not an array\n  return {\n    json: {\n      ok: false,\n      error: \"No embedding in response\",\n      // keep the original query if you passed it earlier\n      query: $json.query ?? null\n    }\n  };\n}\n\n// Build pgvector literal\nconst vector = \"[\" + emb.map(x => Number(x).toFixed(6)).join(\",\") + \"]\";\n\n// Return ONE object\nreturn {\n  json: {\n    ok: true,\n    vector,\n    query: $json.query ?? null\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        128
+      ],
+      "id": "bd49589b-7e96-41a7-9aa4-156fc33e2b29",
+      "name": "pgvector conversion"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  unique_id   AS id,\n  title_desc  AS title,\n  img_url     AS img,\n  product_url AS product,\n  stars,\n  price,\n  1 - (text_embedding <=> '{{ $json.vector }}'::vector) AS similarity\nFROM public.catalog_items\nORDER BY text_embedding <=> '{{ $json.vector }}'::vector\nLIMIT 5;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1168,
+        128
+      ],
+      "id": "43692f88-83ac-4bcc-9166-b61ba7f0cbeb",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "vDI7bthGWzRXPds0",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "292a072b-1f60-4bf2-9f2d-bcd69af4793a",
+                    "leftValue": "={{ $json.body.intent }}",
+                    "rightValue": "text_rec",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d2de5f54-9886-4fea-940f-a128cbbcf48d",
+                    "leftValue": "={{ $json.body.intent }}",
+                    "rightValue": "image_rec",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "de665730-3a41-4f0b-aed5-90023f12edd2",
+                    "leftValue": "={{ $json.body.intent }}",
+                    "rightValue": "general_talk",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "allMatchingOutputs": false
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -128,
+        192
+      ],
+      "id": "b57654be-8a56-4952-aac0-33e70e77f494",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0c246816-748d-430e-a527-573bf9091f25",
+              "name": "InputText",
+              "value": "={{ $json.body.inputText }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        336,
+        128
+      ],
+      "id": "6ee3e84b-d272-4097-85b5-77a76474b01f",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Be conversational\n\nKeep it short—no more than a few sentences. If someone asks what you can do, say something like:\n\n“I help you find great products from our catalog.”\n\n“You can even upload a photo, and I’ll find similar items.”\n\nIf they ask your name, say: “I’m Commerce Concierge.” If they ask who you represent, say: “I’m your personal shopping helper.” Never make up products that don’t exist.\n\nThen, ask one quick follow-up to guide the search—something like: “Are you looking for a specific category, color, or style?” Offer 2–3 simple choices (e.g., “Shoes, bags, or jackets?” or “For men, women, or kids?”)."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        640,
+        384
+      ],
+      "id": "93071c71-7474-4f40-9f18-bf74fd6ca28d",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "THlxUmVHZqjtpF3v",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api-inference.huggingface.co/models/openai/clip-vit-base-patch32",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ${HF_TOKEN}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"inputs\": \"{{ $json.body.file }}\",\n  \"options\": { \"wait_for_model\": true }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1424,
+        896
+      ],
+      "id": "04e50377-2432-4817-a62c-bc0598a5188e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// HF sometimes returns [[512]]; unwrap to [512]\nlet emb = $json;\nif (Array.isArray(emb) && Array.isArray(emb[0])) emb = emb[0];\n\nif (!Array.isArray(emb) || emb.length !== 512) {\n  return { json: { ok: false, error: \"Expected 512-d CLIP embedding\", got: Array.isArray(emb) ? emb.length : null } };\n}\n\n// OPTIONAL: L2-normalize for cosine search\nlet norm = Math.sqrt(emb.reduce((s, x) => s + x*x, 0));\nif (norm > 0) emb = emb.map(x => x / norm);\n\n// Format as pgvector literal\nconst vector = \"[\" + emb.map(x => Number(x).toFixed(6)).join(\",\") + \"]\";\n\n// IMPORTANT: return a single object (not an array) in per-item mode\nreturn {\n  json: {\n    ok: true,\n    model: \"openai/clip-vit-base-patch32\",\n    dim: 512,\n    normalized: true,\n    vector\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        896
+      ],
+      "id": "6e741537-6bde-4467-ba64-71409132e140",
+      "name": "pgvector conversion1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  unique_id   AS id,\n  title_desc  AS title,\n  img_url     AS img,\n  product_url AS product,\n  stars,\n  price,\n  1 - (image_embedding <=> '{{ $json.vector }}'::vector) AS similarity\nFROM public.catalog_items\nORDER BY image_embedding <=> '{{ $json.vector }}'::vector\nLIMIT 5;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1840,
+        896
+      ],
+      "id": "22cf0433-4dd1-47f5-817a-52b6c649196e",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "vDI7bthGWzRXPds0",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI embeddings": {
+      "main": [
+        [
+          {
+            "node": "pgvector conversion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pgvector conversion": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "pgvector conversion1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pgvector conversion1": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query1": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8397201f-2f90-4845-a0ee-7fd087bf256d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a046632da83a1f947f11c96cd7fafd5f1725cfa568c7536971e83226025eda8d"
+  },
+  "id": "T6cZTOApzzMWLHdU",
+  "tags": []
+}

@@ -1,0 +1,71 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Custom Webhook API",
+    "description": "Sends input text, intent, and optionally an image to the custom webhook endpoint.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://pgangwar.app.n8n.cloud",
+      "description": "Main webhook server"
+    }
+  ],
+  "paths": {
+    "/webhook/e33d0db3-e6a3-4da4-b04b-064ffe596724": {
+      "post": {
+        "operationId": "sendWebhookData",
+        "summary": "Send data to custom webhook",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "inputText": {
+                    "type": "string",
+                    "description": "The user-provided input text"
+                  },
+                  "intent": {
+                    "type": "string",
+                    "description": "The interpreted intent of the user input"
+                  },
+                  "file": {
+    "description": "Optional file input that can be an uploaded image, an image URL, or a PDF (either URL or base64-encoded).",
+  "oneOf": [
+    {
+      "type": "string",
+      "format": "uri",
+      "description": "Publicly accessible URL of the image or PDF."
+    },
+    {
+      "type": "string",
+      "contentEncoding": "base64",
+      "contentMediaType": "application/pdf",
+      "description": "Base64-encoded PDF file data if uploaded directly."
+    },
+    {
+      "type": "string",
+      "contentEncoding": "base64",
+      "contentMediaType": "image/*",
+      "description": "Base64-encoded image data if uploaded directly."
+    }
+  ]
+}
+
+                },
+                "required": ["inputText", "intent"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook received the data successfully"
+          }
+        }
+      }
+    }
+  }
+}
