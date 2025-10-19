@@ -1,12 +1,11 @@
-# commerce_concierge
-<<<<<<< HEAD
+# Commerce Concierge
 Your personal shopping assistant. Drop in a text description or attach an image [file/doc/URL] and I will help you get the best for you.
-=======
+
 Commerce Concierge — AI-Powered Product Recommendation Agent
 
 Your personal shopping assistant. Drop in a text description or attach an image [file/doc/URL] and I will help you get the best for you.
 
-Link to access from here - https://chatgpt.com/g/g-68f14f0b1160819196231b901064226e-commerce-concierge
+Access your personal assistant here - [Try Me](https://chatgpt.com/g/g-68f14f0b1160819196231b901064226e-commerce-concierge)
 
 
 **GitHub Repo Structure**
