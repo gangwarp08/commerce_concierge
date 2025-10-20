@@ -35,13 +35,14 @@ Users can chat, upload an image, or describe a product, and the agent recommends
 
 
 ### TECHNOLOGY STACK AND DESIGN DECISIONS
-**Component**	            **Technology**	                **Reason**
-Frontend (Chat)	            OpenAI Custom GPT	            Conversational UX without hosting overhead
-Middleware	                n8n Workflow	                Low-code orchestration of OpenAI + CLIP + Postgres
-Embeddings (Text)	        text-embedding-3-small(OpenAI)	Fast, compact 384-d embeddings
-Embeddings (Image)	        openai/clip-vit-base-patch32	Industry-standard 512-d image vectors
-Database	                Neon Postgres + pgvector	    Cloud-native vector similarity search
-ETL Pipeline	            Python(SentenceTransformers + OpenCLIP)	Efficient batch embedding (GPU optional)
+|**Component**	            |**Technology**	                            |**Reason**                       |
+|---------------------------|-------------------------------------------|---------------------------------|
+|Frontend (Chat)	        |OpenAI Custom GPT	                        |Conversational UX without hosting overhead|
+|Middleware	                |n8n Workflow	                            |Low-code orchestration of OpenAI + CLIP + Postgres|
+|Embeddings (Text)	        |text-embedding-3-small(OpenAI)	            |Fast, compact 384-d embeddings|
+|Embeddings (Image)	        |openai/clip-vit-base-patch32	            |Industry-standard 512-d image vectors|
+|Database	                |Neon Postgres + pgvector	                |Cloud-native vector similarity search|
+|ETL Pipeline	            |Python(SentenceTransformers + OpenCLIP)	|Efficient batch embedding (GPU optional)|
 
 
 
